@@ -1,0 +1,15 @@
+<!-- FILEPATH: /views/home.handlebars -->
+
+<h1>Welcome to my website!</h1>
+
+{{#if user}}
+  <p>Hello, {{user.name}}!</p>
+{{else}}
+  <p>Please log in to continue.</p>
+{{/if}}
+
+<ul>
+  {{#each posts}}
+    <li>{{this.title}} - {{this.author}}</li>
+  {{/each}}
+</ul>
