@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { engine } from 'express-handlebars';
+import bcrypt from 'bcrypt';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -23,15 +24,18 @@ app.use(express.urlencoded({ extended: true })); // Add this line
 
 // User routes
 app.post('/user/register', async (req, res) => {
-  console.log(req.body);
   try {
     const { username, email, password } = req.body;
+
+    // Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const newUser = await prisma.utilisateurs.create({
       data: {
         username,
         email,
-        password,
+        password: hashedPassword, // Store the hashed password
       },
     });
 
