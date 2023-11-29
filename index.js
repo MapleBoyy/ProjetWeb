@@ -6,7 +6,7 @@ const port = 3010;
 
 const userRouter = express.Router();
 
-const logger = (req, res, next) => {
+const logger = (req, _res, next) => {
   console.log(`IP: ${req.ip}, Method: ${req.method}, Route: ${req.originalUrl}, Date: ${new Date().toLocaleString()}`);
   next();
 };
@@ -20,11 +20,11 @@ app.set('view engine', 'handlebars');
 app.set('views', './views');
 
 // User routes
-userRouter.get('/register', (req, res) => {
+userRouter.get('/register', (_req, res) => {
   res.render('register');
 });
 
-userRouter.post('/register', async (req, res) => {
+userRouter.post('/register', async (_req, _res) => {
   // Handle registration
 });
 

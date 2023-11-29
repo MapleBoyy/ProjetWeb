@@ -7,27 +7,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Contact {
-  id        Int      @id @default(autoincrement())
-  firstName String
-  lastName  String
-  email     String   @unique
-  phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  addresses Address[]
+model groupes {
+  groupe_id            Int                    @id @default(autoincrement())
+  nom_groupe           String                 @db.VarChar(50)
+  createur_id          Int?
+  utilisateurs         utilisateurs?          @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
+  rappels              rappels[]
+  utilisateurs_groupes utilisateurs_groupes[] @ignore
+
+  @@index([createur_id], map: "createur_id")
 }
 
-model Address {
-  id        Int      @id @default(autoincrement())
-  street    String
-  city      String
-  state     String
-  zip       String
-  contactId Int
-  contact   Contact  @relation(fields: [contactId], references: [id])
+model rappels {
+  rappel_id      Int       @id @default(autoincrement())
+  nom_rappel     String    @db.VarChar(100)
+  description    String?   @db.Text
+  date_echeance  DateTime? @db.Date
+  heure_echeance DateTime? @db.Time(0)
+  couleur        String?   @db.VarChar(20)
+  groupe_id      Int?
+  groupes        groupes?  @relation(fields: [groupe_id], references: [groupe_id], onDelete: Restrict, onUpdate: Restrict, map: "rappels_ibfk_1")
+
+  @@index([groupe_id], map: "groupe_id")
 }
 
+model utilisateurs {
+  utilisateur_id       Int                    @id @default(autoincrement())
+  username             String                 @db.VarChar(50)
+  email                String                 @db.VarChar(200)
+  password             String                 @db.VarChar(100)
+  groupes              groupes[]
+  utilisateurs_groupes utilisateurs_groupes[] @ignore
+}
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model utilisateurs_groupes {
+  utilisateur_id Int?
+  groupe_id      Int?
+  utilisateurs   utilisateurs? @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "utilisateurs_groupes_ibfk_1")
+  groupes        groupes?      @relation(fields: [groupe_id], references: [groupe_id], onDelete: Restrict, onUpdate: Restrict, map: "utilisateurs_groupes_ibfk_2")
 
-
+  @@index([groupe_id], map: "groupe_id")
+  @@index([utilisateur_id], map: "utilisateur_id")
+  @@ignore
+}
