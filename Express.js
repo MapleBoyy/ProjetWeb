@@ -13,13 +13,9 @@ app.use(express.json());
 // User routes
 app.post('/register', async (req, res) => {
   try {
-    // Extract the user data from the request body
     const { username, email, password } = req.body;
 
-    // Perform validation on the user data (e.g., check for required fields, validate email format, etc.)
-
-    // Create a new user in the database using the Prisma client
-    const newUser = await prisma.user.create({
+    const newUser = await prisma.utilisateurs.create({
       data: {
         username,
         email,
@@ -27,10 +23,8 @@ app.post('/register', async (req, res) => {
       },
     });
 
-    // Return a success response with the newly created user
     res.status(201).json(newUser);
   } catch (error) {
-    // Handle any errors that occur during the registration process
     console.error('Error during registration:', error);
     res.status(500).json({ error: 'An error occurred during registration' });
   }
@@ -39,7 +33,7 @@ app.post('/register', async (req, res) => {
 // Login logic
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await prisma.utilisateurs.findUnique({ where: { username } });
   if (!user || user.password !== password) {
     return res.status(400).json({ error: 'Invalid username or password' });
   }
@@ -48,26 +42,16 @@ app.post('/login', async (req, res) => {
 
 // Group creation logic
 app.post('/group', async (req, res) => {
-  const { name } = req.body;
-  const group = await prisma.group.create({ data: { name } });
+  const { name, createur_id } = req.body;
+  const group = await prisma.groupes.create({ data: { nom_groupe: name, createur_id } });
   res.status(201).json(group);
-});
-
-// Invitation logic
-app.post('/group/:id/invite', async (req, res) => {
-  const { id } = req.params;
-  const { userId } = req.body;
-  const invitation = await prisma.invitation.create({
-    data: { groupId: parseInt(id, 10), userId },
-  });
-  res.status(201).json(invitation);
 });
 
 // Reminder creation logic
 app.post('/reminder', async (req, res) => {
-  const { message, userId } = req.body;
-  const reminder = await prisma.reminder.create({
-    data: { message, userId },
+  const { nom_rappel, description, date_echeance, heure_echeance, couleur, groupe_id } = req.body;
+  const reminder = await prisma.rappels.create({
+    data: { nom_rappel, description, date_echeance, heure_echeance, couleur, groupe_id },
   });
   res.status(201).json(reminder);
 });
