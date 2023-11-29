@@ -36,22 +36,40 @@ app.post('/register', async (req, res) => {
   }
 });
 
+// Login logic
 app.post('/login', async (req, res) => {
-  // Login logic
+  const { username, password } = req.body;
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user || user.password !== password) {
+    return res.status(400).json({ error: 'Invalid username or password' });
+  }
+  res.json(user);
 });
 
-// Group routes
+// Group creation logic
 app.post('/group', async (req, res) => {
-  // Group creation logic
+  const { name } = req.body;
+  const group = await prisma.group.create({ data: { name } });
+  res.status(201).json(group);
 });
 
+// Invitation logic
 app.post('/group/:id/invite', async (req, res) => {
-  // Invitation logic
+  const { id } = req.params;
+  const { userId } = req.body;
+  const invitation = await prisma.invitation.create({
+    data: { groupId: parseInt(id, 10), userId },
+  });
+  res.status(201).json(invitation);
 });
 
-// Reminder routes
+// Reminder creation logic
 app.post('/reminder', async (req, res) => {
-  // Reminder creation logic
+  const { message, userId } = req.body;
+  const reminder = await prisma.reminder.create({
+    data: { message, userId },
+  });
+  res.status(201).json(reminder);
 });
 
 app.listen(3010, () => {
