@@ -4,14 +4,24 @@ import { engine } from 'express-handlebars';
 
 const app = express();
 const prisma = new PrismaClient();
+const port = 3010;
+
+const logger = (req, _res, next) => {
+  console.log(`IP: ${req.ip}, Method: ${req.method}, Route: ${req.originalUrl}, Date: ${new Date().toLocaleString()}`);
+  next();
+};
+
+// Apply the logger middleware
+app.use(logger);
 
 app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
+app.set('views', './views');
 
 app.use(express.json());
 
 // User routes
-app.post('/register', async (req, res) => {
+app.post('/user/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
@@ -25,37 +35,16 @@ app.post('/register', async (req, res) => {
 
     res.status(201).json(newUser);
   } catch (error) {
-    console.error('Error during registration:', error);
-    res.status(500).json({ error: 'An error occurred during registration' });
+    console.error('Erreur pendant l inscription:', error);
+    res.status(500).json({ error: 'Une erreur est arrivé pendant l inscription' });
   }
 });
 
-// Login logic
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await prisma.utilisateurs.findUnique({ where: { username } });
-  if (!user || user.password !== password) {
-    return res.status(400).json({ error: 'Invalid username or password' });
-  }
-  res.json(user);
+// User routes
+app.get('/register', (_req, res) => {
+  res.render('register');
 });
 
-// Group creation logic
-app.post('/group', async (req, res) => {
-  const { name, createur_id } = req.body;
-  const group = await prisma.groupes.create({ data: { nom_groupe: name, createur_id } });
-  res.status(201).json(group);
-});
-
-// Reminder creation logic
-app.post('/reminder', async (req, res) => {
-  const { nom_rappel, description, date_echeance, heure_echeance, couleur, groupe_id } = req.body;
-  const reminder = await prisma.rappels.create({
-    data: { nom_rappel, description, date_echeance, heure_echeance, couleur, groupe_id },
-  });
-  res.status(201).json(reminder);
-});
-
-app.listen(3010, () => {
-  console.log('Server is running on port 3010');
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
