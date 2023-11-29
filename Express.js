@@ -19,9 +19,11 @@ app.set('view engine', 'handlebars');
 app.set('views', './views');
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Add this line
 
 // User routes
 app.post('/user/register', async (req, res) => {
+  console.log(req.body);
   try {
     const { username, email, password } = req.body;
 
