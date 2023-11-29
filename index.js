@@ -1,5 +1,3 @@
-//C:\Users\gabri\Documents\GitHub\ProjetWeb
-
 const express = require('express');
 const { resolve } = require('path');
 
