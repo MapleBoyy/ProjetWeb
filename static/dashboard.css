@@ -1,0 +1,31 @@
+/* Style pour la barre de navigation */
+.navbar {
+    background-color: #333;
+    height: 60px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: 0 2px 4px 0 rgba(0,0,0,0.2);
+  }
+  
+  /* Style pour le profil utilisateur */
+  .profile {
+    display: flex;
+    align-items: center;
+  }
+  
+  .profile p {
+    margin-right: 10px;
+  }
+
+  .logout a {
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  /* Style pour le reste du tableau de bord */
+  .dashboard-content {
+    margin-top: 80px; /* Pour éviter que le contenu ne soit caché sous la barre de navigation */
+  }

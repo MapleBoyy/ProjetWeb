@@ -1,13 +1,19 @@
 <!-- dashboard.handlebars -->
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tableau de bord</title>
+  <link rel="stylesheet" type="text/css" href="/dashboard.css">
 </head>
 <body>
-    <h1>Tableau de bord</h1>
-    <p>Bienvenue sur votre tableau de bord!</p>
-    <!-- Ajoutez ici le contenu de votre tableau de bord -->
+  <div class="navbar">
+    <div class="profile">
+      <p>Bonjour, {{username}}</p>
+    </div>
+    <div class="logout">
+      <a href="/logout">Se déconnecter</a>
+    </div>
+  </div>
+
+  <!-- Le reste de votre HTML ici -->
 </body>
 </html>
