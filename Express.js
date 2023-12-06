@@ -2,6 +2,7 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { engine } from 'express-handlebars';
 import bcrypt from 'bcrypt';
+import session from 'express-session';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -22,6 +23,11 @@ app.set('views', './views');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Add this line
 app.use(express.static('static'));
+app.use(session({
+  secret: 'your secret key',
+  resave: false,
+  saveUninitialized: true,
+}));
 
 // User routes
 app.post('/user/register', async (req, res) => {
@@ -92,6 +98,7 @@ app.post('/user/login', async (req, res) => {
 
     // If the passwords match, send a success message
     if (isPasswordValid) {
+      req.session.user = user;
       return res.redirect('/dashboard');
     } else {
       // If the passwords don't match, send an error
@@ -111,6 +118,23 @@ app.get('/register', (_req, res) => {
 
 app.get('/login', (_req, res) => {
   res.render('login');
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return console.log(err);
+    }
+    res.redirect('/login');
+  });
+});
+
+app.get('/dashboard', (req, res) => {
+  if (req.session.user) {
+    res.render('dashboard', { username: req.session.user.username });
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.listen(port, () => {
