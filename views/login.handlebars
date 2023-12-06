@@ -1,21 +1,18 @@
-<!-- register.handlebars -->
+<!-- login.handlebars -->
 <!DOCTYPE html>
 <html>
 <head>
   <link rel="stylesheet" type="text/css" href="/style.css">
 </head>
 <body>
-  <form action="/user/register" method="post">
+    <form action="/user/login" method="post">
     <label for="username">Username:</label>
     <input type="text" id="username" name="username" required>
-
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required>
 
     <label for="password">Password:</label>
     <input type="password" id="password" name="password" required>
 
-    <input type="submit" value="Inscription">
-  </form>
+    <input type="submit" value="Login">
+    </form>
 </body>
 </html>
