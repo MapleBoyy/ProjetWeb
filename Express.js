@@ -3,17 +3,17 @@ import { PrismaClient } from '@prisma/client';
 import { engine } from 'express-handlebars';
 import bcrypt from 'bcrypt';
 import session from 'express-session';
+import hbs from 'hbs';
 
 const app = express();
 const prisma = new PrismaClient();
 const port = 3010;
 
 const logger = (req, _res, next) => {
-  console.log(`IP: ${req.ip}, Method: ${req.method}, Route: ${req.originalUrl}, Date: ${new Date().toLocaleString()}`);
+  console.log(`IP: ${req.ip}, Méthode: ${req.method}, Route: ${req.originalUrl}, Date: ${new Date().toLocaleString()}`);
   next();
 };
-
-// Apply the logger middleware
+// Appliquer le middleware logger
 app.use(logger);
 
 app.engine('handlebars', engine());
@@ -21,20 +21,22 @@ app.set('view engine', 'handlebars');
 app.set('views', './views');
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Add this line
+app.use(express.urlencoded({ extended: true })); // Ajouter cette ligne
 app.use(express.static('static'));
 app.use(session({
-  secret: 'your secret key',
+  secret: 'votre clé secrète',
   resave: false,
   saveUninitialized: true,
 }));
 
-// User routes
+hbs.registerPartials(new URL('./views/partials', import.meta.url));
+
+// Routes utilisateur
 app.post('/user/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if the username already exists
+    // Vérifier si le nom d'utilisateur existe déjà
     const existingUsername = await prisma.utilisateurs.findFirst({
       where: {
         username,
@@ -45,7 +47,7 @@ app.post('/user/register', async (req, res) => {
       return res.status(400).json({ error: 'Le pseudo existe déjà' });
     }
 
-    // Check if the email already exists
+    // Vérifier si l'email existe déjà
     const existingEmail = await prisma.utilisateurs.findFirst({
       where: {
         email,
@@ -56,7 +58,7 @@ app.post('/user/register', async (req, res) => {
       return res.status(400).json({ error: 'L\'email existe déjà' });
     }
 
-    // Hash the password
+    // Hasher le mot de passe
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
@@ -64,11 +66,11 @@ app.post('/user/register', async (req, res) => {
       data: {
         username,
         email,
-        password: hashedPassword, // Store the hashed password
+        password: hashedPassword, // Stocker le mot de passe hashé
       },
     });
 
-    // Redirect the user to the login page
+    // Rediriger l'utilisateur vers la page de connexion
     res.redirect('/login');
   } catch (error) {
     console.error('Erreur pendant l inscription:', error);
@@ -76,42 +78,133 @@ app.post('/user/register', async (req, res) => {
   }
 });
 
-
 app.post('/user/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    // Find the user in the database
+    // Trouver l'utilisateur dans la base de données
     const user = await prisma.utilisateurs.findFirst({
       where: {
         username,
       },
+      select: {
+        utilisateur_id: true, // Assurez-vous d'inclure l'id ici
+        username: true,
+        password: true,
+      },
     });
 
-    // If the user doesn't exist, send an error
+    // Si l'utilisateur n'existe pas, envoyer une erreur
     if (!user) {
-      return res.status(400).json({ error: 'User does not exist' });
+      return res.status(400).json({ error: 'L\'utilisateur n\'existe pas' });
     }
 
-    // Compare the provided password with the stored hashed password
+    // Comparer le mot de passe fourni avec le mot de passe hashé stocké
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    // If the passwords match, send a success message
+    // Si les mots de passe correspondent, envoyer un message de succès
     if (isPasswordValid) {
       req.session.user = user;
-      return res.redirect('/dashboard');
+      req.session.save(err => {
+        if(err) {
+          console.error('Erreur lors de la sauvegarde de la session:', err);
+          return res.status(500).json({ error: 'Une erreur est survenue pendant la connexion' });
+        }
+        return res.redirect('/dashboard');
+      });
     } else {
-      // If the passwords don't match, send an error
-      return res.status(401).json({ error: 'Invalid password' });
+      // Si les mots de passe ne correspondent pas, envoyer une erreur
+      return res.status(401).json({ error: 'Mot de passe invalide' });
     }
   } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ error: 'An error occurred during login' });
+    console.error('Erreur lors de la connexion:', error);
+    res.status(500).json({ error: 'Une erreur est survenue pendant la connexion' });
   }
 });
 
+// Créer un nouveau groupe
+app.post('/create-group', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+  try {
+    console.log(req.session.user.utilisateur_id, "test"); // Utilisez utilisateur_id ici
+  } catch (error) {
+    console.error('Error logging user id:', error);
+  }
 
-// User routes
+  try {
+    const { groupName } = req.body;
+    const creatorId = req.session.user.utilisateur_id; // Utilisez utilisateur_id ici
+
+    // Vérifier si le nom du groupe est unique et si le créateur est le même
+    const existingGroup = await prisma.groupes.findUnique({
+      where: {
+        nom_groupe: groupName,
+        createur_id: creatorId,
+      },
+    });
+
+    if (existingGroup) {
+      return res.status(400).json({ error: 'Le nom du groupe existe déjà pour cet utilisateur' });
+    }
+
+    // Créer le groupe
+    const group = await prisma.groupes.create({
+      data: {
+        nom_groupe: groupName,
+        createur_id: creatorId,
+      },
+    });
+
+    res.status(201).json({ message: 'Groupe créé avec succès', group });
+  } catch (error) {
+    console.error('Erreur lors de la création du groupe:', error);
+    res.status(500).json({ error: 'Une erreur est survenue lors de la création du groupe' });
+  }
+});
+
+// Ajouter un utilisateur à un groupe
+app.post('/add-user-to-group', async (req, res) => {
+  try {
+    const { groupId, userId } = req.body;
+
+    // Vérifier si le groupe existe
+    const group = await prisma.groupes.findUnique({
+      where: {
+        groupe_id: groupId,
+      },
+    });
+
+    if (!group) {
+      return res.status(404).json({ error: 'Groupe introuvable' });
+    }
+
+    // Vérifier si l'utilisateur existe
+    const user = await prisma.utilisateurs.findUnique({
+      where: {
+        utilisateur_id: userId,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Utilisateur introuvable' });
+    }
+
+    // Ajouter l'utilisateur au groupe
+    // Cette partie doit être mise à jour en fonction de votre schéma de base de données
+    // car il n'est pas clair comment vous gérez la relation entre les utilisateurs et les groupes
+
+    res.status(200).json({ message: 'Utilisateur ajouté au groupe avec succès' });
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout de l\'utilisateur au groupe:', error);
+    res.status(500).json({ error: 'Une erreur est survenue lors de l\'ajout de l\'utilisateur au groupe' });
+  }
+});
+
+//-----------------------APP.GET-----------------------//
+
+// Routes utilisateur
 app.get('/register', (_req, res) => {
   res.render('register');
 });
@@ -129,14 +222,33 @@ app.get('/logout', (req, res) => {
   });
 });
 
+//app.get create-group
+app.get('/create-group', (req, res) => {
+  if (req.session.user) {
+    res.render('create-group', { username: req.session.user && req.session.user.username });
+  } else {
+    res.redirect('/login');
+  }
+});
+
+//app.get add-user-to-group
+app.get('/add-user-to-group', (req, res) => {
+  if (req.session.user) {
+    res.render('add-user-to-group');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+
 app.get('/dashboard', (req, res) => {
   if (req.session.user) {
-    res.render('dashboard', { username: req.session.user.username });
+    res.render('dashboard', { username: req.session.user && req.session.user.username && req.session.user.id});
   } else {
     res.redirect('/login');
   }
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Le serveur fonctionne sur le port ${port}`);
 });

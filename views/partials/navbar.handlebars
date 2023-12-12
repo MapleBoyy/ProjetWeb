@@ -1,0 +1,15 @@
+<div class="navbar">
+    <div class="profile">
+        {{#if username}}
+            <p>Bonjour, {{username}}</p>
+        {{/if}}
+    </div>
+    {{#if username}}
+        <div class="logout">
+            <a href="/logout">Se déconnecter</a>
+        </div>
+        <div class="create-group">
+            <a href="/create-group">Créer un groupe</a>
+        </div>
+    {{/if}}
+</div>
