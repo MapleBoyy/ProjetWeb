@@ -8,11 +8,11 @@ datasource db {
 }
 
 model groupes {
-  groupe_id            Int                    @id @default(autoincrement())
-  nom_groupe           String                 @db.VarChar(50)
-  createur_id          Int?
-  utilisateurs         utilisateurs?          @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
-  rappels              rappels[]
+  groupe_id Int @id @default(autoincrement())
+  nom_groupe String @unique // Add @unique here
+  createur_id Int?
+  utilisateurs utilisateurs? @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
+  rappels rappels[]
   utilisateurs_groupes utilisateurs_groupes[] @ignore
 
   @@index([createur_id], map: "createur_id")

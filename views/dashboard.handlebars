@@ -2,18 +2,21 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="/dashboard.css">
+    <link rel="stylesheet" type="text/css" href="/dashboard.css">
 </head>
 <body>
-  <div class="navbar">
-    <div class="profile">
-      <p>Bonjour, {{username}}</p>
+    <div class="navbar">
+        <div class="profile">
+            <p>Bonjour, {{username}}</p>
+        </div>
+        <div class="logout">
+            <a href="/logout">Se déconnecter</a>
+        </div>
+        <div class="create-group">
+            <a href="/create-group">Créer un groupe</a>
+        </div>
     </div>
-    <div class="logout">
-      <a href="/logout">Se déconnecter</a>
-    </div>
-  </div>
 
-  <!-- Le reste de votre HTML ici -->
+    <!-- Le reste de votre HTML ici -->
 </body>
 </html>
