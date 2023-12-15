@@ -128,25 +128,18 @@ app.post('/create-group', async (req, res) => {
     return res.status(401).json({ error: 'Non authentifié' });
   }
   try {
-    console.log(req.session.user.utilisateur_id, "test"); // Utilisez utilisateur_id ici
-  } catch (error) {
-    console.error('Error logging user id:', error);
-  }
-
-  try {
     const { groupName } = req.body;
     const creatorId = req.session.user.utilisateur_id; // Utilisez utilisateur_id ici
 
-    // Vérifier si le nom du groupe est unique et si le créateur est le même
-    const existingGroup = await prisma.groupes.findUnique({
+    // Vérifier si le nom du groupe est unique
+    const existingGroup = await prisma.groupes.findFirst({
       where: {
         nom_groupe: groupName,
-        createur_id: creatorId,
       },
     });
 
     if (existingGroup) {
-      return res.status(400).json({ error: 'Le nom du groupe existe déjà pour cet utilisateur' });
+      return res.status(400).json({ error: 'Le nom du groupe existe déjà' });
     }
 
     // Créer le groupe
@@ -157,7 +150,15 @@ app.post('/create-group', async (req, res) => {
       },
     });
 
-    res.status(201).json({ message: 'Groupe créé avec succès', group });
+    // Ajouter le créateur du groupe à la table utilisateurs_groupes
+    await prisma.utilisateurs_groupes.create({
+      data: {
+        utilisateur_id: creatorId,
+        groupe_id: group.groupe_id,
+      },
+    });
+
+    return res.redirect('/add-user-to-group');
   } catch (error) {
     console.error('Erreur lors de la création du groupe:', error);
     res.status(500).json({ error: 'Une erreur est survenue lors de la création du groupe' });
@@ -169,10 +170,15 @@ app.post('/add-user-to-group', async (req, res) => {
   try {
     const { groupId, userId } = req.body;
 
+    // Vérifier si groupId et userId sont fournis
+    if (!groupId || !userId) {
+      return res.status(400).json({ error: 'groupId et userId sont requis' });
+    }
+
     // Vérifier si le groupe existe
     const group = await prisma.groupes.findUnique({
       where: {
-        groupe_id: groupId,
+        groupe_id: Number(groupId),
       },
     });
 
@@ -183,7 +189,7 @@ app.post('/add-user-to-group', async (req, res) => {
     // Vérifier si l'utilisateur existe
     const user = await prisma.utilisateurs.findUnique({
       where: {
-        utilisateur_id: userId,
+        utilisateur_id: Number(userId),
       },
     });
 
@@ -191,11 +197,27 @@ app.post('/add-user-to-group', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur introuvable' });
     }
 
-    // Ajouter l'utilisateur au groupe
-    // Cette partie doit être mise à jour en fonction de votre schéma de base de données
-    // car il n'est pas clair comment vous gérez la relation entre les utilisateurs et les groupes
+    // Vérifier si l'utilisateur est déjà membre du groupe
+    const existingMembership = await prisma.utilisateurs_groupes.findFirst({
+      where: {
+        utilisateur_id: Number(userId),
+        groupe_id: Number(groupId),
+      },
+    });
 
-    res.status(200).json({ message: 'Utilisateur ajouté au groupe avec succès' });
+    if (existingMembership) {
+      return res.status(400).json({ error: 'L\'utilisateur est déjà membre de ce groupe' });
+    }
+
+    // Ajouter l'utilisateur au groupe
+    const userGroup = await prisma.utilisateurs_groupes.create({
+      data: {
+        utilisateur_id: Number(userId),
+        groupe_id: Number(groupId),
+      },
+    });
+
+    res.status(200).json({ message: 'Utilisateur ajouté au groupe avec succès', userGroup });
   } catch (error) {
     console.error('Erreur lors de l\'ajout de l\'utilisateur au groupe:', error);
     res.status(500).json({ error: 'Une erreur est survenue lors de l\'ajout de l\'utilisateur au groupe' });
@@ -232,18 +254,29 @@ app.get('/create-group', (req, res) => {
 });
 
 //app.get add-user-to-group
-app.get('/add-user-to-group', (req, res) => {
-  if (req.session.user) {
-    res.render('add-user-to-group');
-  } else {
-    res.redirect('/login');
+app.get('/add-user-to-group', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+  try {
+    const creatorId = req.session.user.utilisateur_id; // Utilisez utilisateur_id ici
+    const groups = await prisma.groupes.findMany({
+      where: {
+        createur_id: creatorId,
+      },
+    });
+    const users = await prisma.utilisateurs.findMany();
+    res.render('add-user-to-group', { groups, users });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des groupes ou des utilisateurs:', error);
+    res.status(500).send('Une erreur est survenue lors de la récupération des groupes ou des utilisateurs');
   }
 });
 
 
 app.get('/dashboard', (req, res) => {
   if (req.session.user) {
-    res.render('dashboard', { username: req.session.user && req.session.user.username && req.session.user.id});
+    res.render('dashboard', { username: req.session.user && req.session.user.username});
   } else {
     res.redirect('/login');
   }

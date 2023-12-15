@@ -1,15 +1,10 @@
 <!-- FILEPATH: /c:/Users/Romai/Desktop/Web/ProjetWeb/views/groups.handlebars -->
+
 <h1>Gestion des Groupes</h1>
 
 <form action="/create-group" method="POST">
   <label for="groupName">Nom du groupe:</label>
   <input type="text" id="groupName" name="groupName" required>
-
-  <label for="groupMembers">Membres du groupe:</label>
-  <select name="users">
-    {{#each users}}
-      <option value="{{this.utilisateur_id}}">{{this.username}}</option>
-    {{/each}}
-  </select>
   <button type="submit">Créer le groupe</button>
 </form>
+

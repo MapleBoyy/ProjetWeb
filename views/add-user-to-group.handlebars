@@ -1,29 +1,25 @@
-<!-- FILEPATH: /c:/Users/Romai/Desktop/Web/ProjetWeb/views/add-user-to-group.handlebars -->
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add User to Group</title>
+  <link rel="stylesheet" type="text/css" href="/create-and-add-user-group.css">
 </head>
 <body>
-    <h1>Add User to Group</h1>
+<form action="/add-user-to-group" method="POST">
+    <label for="groupId">Group:</label>
+    <select id="groupId" name="groupId" required>
+        {{#each groups}}
+            <option value="{{this.groupe_id}}">{{this.nom_groupe}}</option>
+        {{/each}}
+    </select>
 
-    <form action="/add-user-to-group" method="POST">
-        <label for="group">Group:</label>
-        <select id="group" name="group" required>
-            {{#each groups}}
-                <option value="{{this}}">{{this}}</option>
-            {{/each}}
-        </select>
+    <label for="userId">Users:</label>
+    <select id="userId" name="userId" required>
+        {{#each users}}
+            <option value="{{this.utilisateur_id}}">{{this.username}}</option>
+        {{/each}}
+    </select>
 
-        <label for="users">Users:</label>
-        <select id="users" name="users[]" multiple required>
-            {{#each users}}
-                <option value="{{this.utilisateur_id}}">{{this.username}}</option>
-            {{/each}}
-        </select>
-
-        <button type="submit">Add User to Group</button>
-    </form>
+    <button type="submit">Add User to Group</button>
+</form>
 </body>
 </html>

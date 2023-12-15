@@ -9,11 +9,11 @@ datasource db {
 
 model groupes {
   groupe_id Int @id @default(autoincrement())
-  nom_groupe String @unique // Add @unique here
+  nom_groupe String @unique
   createur_id Int?
   utilisateurs utilisateurs? @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
   rappels rappels[]
-  utilisateurs_groupes utilisateurs_groupes[] @ignore
+  utilisateurs_groupes utilisateurs_groupes[]
 
   @@index([createur_id], map: "createur_id")
 }
@@ -32,22 +32,21 @@ model rappels {
 }
 
 model utilisateurs {
-  utilisateur_id       Int                    @id @default(autoincrement())
-  username             String                 @db.VarChar(50) @unique
-  email                String                 @db.VarChar(200)
-  password             String                 @db.VarChar(100)
-  groupes              groupes[]
-  utilisateurs_groupes utilisateurs_groupes[] @ignore
+  utilisateur_id Int @id @default(autoincrement())
+  username String @db.VarChar(50) @unique
+  email String @db.VarChar(200)
+  password String @db.VarChar(100)
+  groupes groupes[]
+  utilisateurs_groupes utilisateurs_groupes[]
+
+  @@index([utilisateur_id], map: "utilisateur_id")
 }
 
-/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model utilisateurs_groupes {
-  utilisateur_id Int?
-  groupe_id      Int?
-  utilisateurs   utilisateurs? @relation(fields: [utilisateur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "utilisateurs_groupes_ibfk_1")
-  groupes        groupes?      @relation(fields: [groupe_id], references: [groupe_id], onDelete: Restrict, onUpdate: Restrict, map: "utilisateurs_groupes_ibfk_2")
+  utilisateur_id Int
+  groupe_id Int
+  utilisateur utilisateurs @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  groupe groupes @relation(fields: [groupe_id], references: [groupe_id])
 
-  @@index([groupe_id], map: "groupe_id")
-  @@index([utilisateur_id], map: "utilisateur_id")
-  @@ignore
+  @@id([utilisateur_id, groupe_id])
 }
