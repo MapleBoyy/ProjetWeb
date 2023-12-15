@@ -24,9 +24,10 @@
   margin-right: 10px;
 }
 
-.logout a {
+.logout a, .add-user a, .create-group a {
   color: #fff;
   text-decoration: none;
+  margin-left: 10px;
 }
 
 /* Style pour le reste du tableau de bord */
