@@ -1,0 +1,47 @@
+<head>
+  <link rel="stylesheet" type="text/css" href="/add-rappel.css">
+  <!-- Inclure le CSS de Quill -->
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+</head>
+
+<form action="/add-rappel" method="post">
+  <label for="groupe_id">Sélectionnez un groupe:</label>
+  <select id="groupe_id" name="groupe_id">
+    {{#each groups}}
+      <option value="{{this.groupe_id}}">{{this.nom_groupe}}</option>
+    {{/each}}
+  </select>
+
+  <label for="nom_rappel">Nom du rappel:</label>
+  <input type="text" id="nom_rappel" name="nom_rappel" required>
+
+  <label for="description">Description du rappel:</label>
+  <div id="editor" style="height: 200px;"></div> <!-- Remplacer textarea par un div pour Quill -->
+  <input type="hidden" id="description" name="description"> <!-- Ajouter un champ caché pour stocker la description -->
+
+  <label for="date_echeance">Date d'échéance:</label>
+  <input type="date" id="date_echeance" name="date_echeance" required>
+
+  <label for="heure_echeance">Heure d'échéance:</label>
+  <input type="time" id="heure_echeance" name="heure_echeance" required>
+
+  <label for="couleur">Couleur du rappel:</label>
+  <input type="color" id="couleur" name="couleur">
+
+  <input type="submit" value="Ajouter le rappel">
+</form>
+
+<!-- Inclure le JavaScript de Quill -->
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<!-- Initialiser Quill -->
+<script>
+  var quill = new Quill('#editor', {
+    theme: 'snow'
+  });
+
+  // Lorsque le formulaire est soumis, mettre à jour le champ caché avec le contenu HTML de l'éditeur
+  document.querySelector('form').onsubmit = function() {
+    document.querySelector('#description').value = quill.root.innerHTML;
+  };
+</script>

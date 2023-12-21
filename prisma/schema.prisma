@@ -11,7 +11,7 @@ model groupes {
   groupe_id Int @id @default(autoincrement())
   nom_groupe String @unique
   createur_id Int?
-  utilisateurs utilisateurs? @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
+  createur utilisateurs? @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
   rappels rappels[]
   utilisateurs_groupes utilisateurs_groupes[]
 
@@ -23,8 +23,8 @@ model rappels {
   nom_rappel     String    @db.VarChar(100)
   description    String?   @db.Text
   date_echeance  DateTime? @db.Date
-  heure_echeance DateTime? @db.Time(0)
-  couleur        String?   @db.VarChar(20)
+  heure_echeance DateTime? // Changez le type de 'heure_echeance' à 'DateTime'
+  couleur        String    @db.VarChar(20)
   groupe_id      Int?
   groupes        groupes?  @relation(fields: [groupe_id], references: [groupe_id], onDelete: Restrict, onUpdate: Restrict, map: "rappels_ibfk_1")
 
@@ -36,7 +36,7 @@ model utilisateurs {
   username String @db.VarChar(50) @unique
   email String @db.VarChar(200)
   password String @db.VarChar(100)
-  groupes groupes[]
+  groupes_crees groupes[]
   utilisateurs_groupes utilisateurs_groupes[]
 
   @@index([utilisateur_id], map: "utilisateur_id")

@@ -13,7 +13,8 @@ const logger = (req, _res, next) => {
   console.log(`IP: ${req.ip}, Méthode: ${req.method}, Route: ${req.originalUrl}, Date: ${new Date().toLocaleString()}`);
   next();
 };
-// Appliquer le middleware logger
+
+
 app.use(logger);
 
 app.engine('handlebars', engine());
@@ -21,7 +22,7 @@ app.set('view engine', 'handlebars');
 app.set('views', './views');
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Ajouter cette ligne
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('static'));
 app.use(session({
   secret: 'votre clé secrète',
@@ -88,7 +89,7 @@ app.post('/user/login', async (req, res) => {
         username,
       },
       select: {
-        utilisateur_id: true, // Assurez-vous d'inclure l'id ici
+        utilisateur_id: true,
         username: true,
         password: true,
       },
@@ -167,6 +168,7 @@ app.post('/create-group', async (req, res) => {
 
 // Ajouter un utilisateur à un groupe
 app.post('/add-user-to-group', async (req, res) => {
+  console.log(req.body);
   try {
     const { groupId, userId } = req.body;
 
@@ -217,10 +219,68 @@ app.post('/add-user-to-group', async (req, res) => {
       },
     });
 
-    res.status(200).json({ message: 'Utilisateur ajouté au groupe avec succès', userGroup });
+    // Rediriger vers le tableau de bord une fois l'utilisateur ajouté
+    res.redirect('/dashboard');
   } catch (error) {
     console.error('Erreur lors de l\'ajout de l\'utilisateur au groupe:', error);
     res.status(500).json({ error: 'Une erreur est survenue lors de l\'ajout de l\'utilisateur au groupe' });
+  }
+});
+
+// Traiter les données du formulaire de création de rappel
+app.post('/add-rappel', async (req, res) => {
+  console.log(req.body);
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+  
+  const { groupe_id, nom_rappel, date_echeance, heure_echeance, description, couleur } = req.body;
+
+  // Convertir groupe_id en nombre
+  const groupeIdNumber = Number(groupe_id);
+
+  // Vérifier si le groupe_id existe dans la table groupes
+  const groupe = await prisma.groupes.findUnique({
+    where: {
+      groupe_id: groupeIdNumber,
+    },
+  });
+
+  if (!groupe) {
+    console.error(`Erreur: Le groupe_id ${groupeIdNumber} n'existe pas dans la table groupes.`);
+    return res.status(400).json({ error: `Le groupe_id ${groupeIdNumber} n'existe pas dans la table groupes.` });
+  }
+
+  // Vérifiez si heure_echeance et couleur sont présents
+  if (heure_echeance === undefined || heure_echeance === null || couleur === undefined || couleur === null) {
+    return res.status(400).json({ error: 'heure_echeance et couleur sont requis' });
+  }
+
+  try {
+    const { nom_rappel, date_echeance, heure_echeance, description, couleur } = req.body;
+  
+  const dateTimeEcheance = new Date(`${date_echeance}T${heure_echeance}`).toISOString();
+
+  // Créer le rappel
+  const rappel = await prisma.rappels.create({
+    data: {
+      nom_rappel,
+      date_echeance: new Date(date_echeance), // Utilisez date_echeance ici
+      description,
+      heure_echeance: new Date(dateTimeEcheance), // Convertissez heure_echeance en Date
+      couleur,
+      groupes: {
+        connect: {
+          groupe_id: groupeIdNumber,
+        },
+      },
+    },
+  });
+  
+    res.redirect('/dashboard');
+  } catch (error) {
+    console.error('Erreur lors de la création du rappel:', error);                     
+    res.status(500).json({ error: 'Une erreur est survenue lors de la création du rappel' });
   }
 });
 
@@ -274,11 +334,108 @@ app.get('/add-user-to-group', async (req, res) => {
 });
 
 
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', async (req, res) => {
   if (req.session.user) {
-    res.render('dashboard', { username: req.session.user && req.session.user.username});
+    try {
+      const userId = req.session.user.utilisateur_id;
+
+      // Récupérez les groupes de l'utilisateur
+      const userGroups = await prisma.utilisateurs_groupes.findMany({
+        where: {
+          utilisateur_id: userId,
+        },
+        include: {
+          groupe: {
+            include: {
+              createur: {
+                select: {
+                  username: true,
+                  utilisateur_id: true,
+                },
+              },
+              utilisateurs_groupes: {
+                include: {
+                  utilisateur: {
+                    select: {
+                      username: true,
+                      utilisateur_id: true,
+                    },
+                  },
+                },
+              },
+              rappels: {
+                orderBy: {
+                  date_echeance: 'desc',
+                },
+              },
+            },
+          },
+        },
+      });
+
+      // Récupérez les groupes à partir des adhésions de groupe
+      const groups = userGroups.map((userGroup) => userGroup.groupe);
+
+      let rappels = groups.flatMap((group) => group.rappels.map((rappel) => {
+        let dateEcheance = new Date(rappel.date_echeance);
+        let heureEcheance = new Date(rappel.heure_echeance);
+        let dateHeureEcheance = new Date(
+          dateEcheance.getFullYear(),
+          dateEcheance.getMonth(),
+          dateEcheance.getDate(),
+          heureEcheance.getHours(),
+          heureEcheance.getMinutes(),
+          heureEcheance.getSeconds()
+        );
+        let heure = heureEcheance.toTimeString().substring(0, 5);
+        return {
+          ...rappel,
+          heure_echeance: heure,
+          dateHeureEcheance,
+          groupName: group.name, // Ajoutez le nom du groupe
+        };
+      }));
+      
+      // Triez les rappels par date et heure d'échéance les plus proches à la plus éloignée
+      rappels.sort((a, b) => a.dateHeureEcheance - b.dateHeureEcheance);
+      
+      // Renvoyez les groupes, les rappels et le nom d'utilisateur à la vue
+      res.render('dashboard', { username: req.session.user.username, groups, rappels });
+    } catch (error) {
+      console.error('Erreur lors de la récupération des groupes de l\'utilisateur:', error);
+      res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des groupes de l\'utilisateur' });
+    }
   } else {
     res.redirect('/login');
+  }
+});
+
+// Afficher le formulaire de création de rappel
+app.get('/add-rappel', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Non authentifié' });
+  }
+  try {
+    const userId = req.session.user.utilisateur_id;
+
+    // Récupérez les groupes de l'utilisateur
+    const userGroups = await prisma.utilisateurs_groupes.findMany({
+      where: {
+        utilisateur_id: userId,
+      },
+      include: {
+        groupe: true,
+      },
+    });
+
+    // Récupérez les groupes à partir des adhésions de groupe
+    const groups = userGroups.map((userGroup) => userGroup.groupe);
+
+    // Renvoyez les groupes à la vue
+    res.render('add-rappel', { groups });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des groupes de l\'utilisateur:', error);
+    res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des groupes de l\'utilisateur' });
   }
 });
 
