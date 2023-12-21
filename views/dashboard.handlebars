@@ -1,0 +1,49 @@
+<head>
+  <link rel="stylesheet" type="text/css" href="/dashboard.css">
+</head>
+
+
+<!-- Ajout de la section pour afficher les rappels -->
+{{#each rappels}}
+  <table>
+    <thead>
+      <tr>
+        <th>Nom du rappel</th>
+        <th>Date d'échéance</th>
+        <th>Heure d'échéance</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background-color: {{this.couleur}};">
+        <td>{{this.nom_rappel}}</td>
+        <td>{{this.date_echeance}}</td>
+        <td>{{this.heure_echeance}}</td>
+        <td>{{this.description}}</td>
+      </tr>
+    </tbody>
+  </table>
+{{/each}}
+
+{{#each groups}}
+  <table>
+    <thead>
+      <tr>
+        <th>Nom du groupe</th>
+        <th>Créateur</th>
+        <th>Utilisateurs</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{this.nom_groupe}}</td>
+        <td>{{this.createur.username}}</td>
+        <td>
+          {{#each this.utilisateurs_groupes}}
+            {{this.utilisateur.username}}
+          {{/each}}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+{{/each}}
