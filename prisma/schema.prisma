@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model groupes {
+  groupe_id Int @id @default(autoincrement())
+  nom_groupe String @unique
+  createur_id Int?
+  createur utilisateurs? @relation(fields: [createur_id], references: [utilisateur_id], onDelete: Restrict, onUpdate: Restrict, map: "groupes_ibfk_1")
+  rappels rappels[]
+  utilisateurs_groupes utilisateurs_groupes[]
+
+  @@index([createur_id], map: "createur_id")
+}
+
+model rappels {
+  rappel_id      Int       @id @default(autoincrement())
+  nom_rappel     String    @db.VarChar(100)
+  description    String?   @db.Text
+  date_echeance  DateTime? @db.Date
+  heure_echeance DateTime? // Changez le type de 'heure_echeance' à 'DateTime'
+  couleur        String    @db.VarChar(20)
+  groupe_id      Int?
+  groupes        groupes?  @relation(fields: [groupe_id], references: [groupe_id], onDelete: Restrict, onUpdate: Restrict, map: "rappels_ibfk_1")
+
+  @@index([groupe_id], map: "groupe_id")
+}
+
+model utilisateurs {
+  utilisateur_id Int @id @default(autoincrement())
+  username String @db.VarChar(50) @unique
+  email String @db.VarChar(200)
+  password String @db.VarChar(100)
+  groupes_crees groupes[]
+  utilisateurs_groupes utilisateurs_groupes[]
+
+  @@index([utilisateur_id], map: "utilisateur_id")
+}
+
+model utilisateurs_groupes {
+  utilisateur_id Int
+  groupe_id Int
+  utilisateur utilisateurs @relation(fields: [utilisateur_id], references: [utilisateur_id])
+  groupe groupes @relation(fields: [groupe_id], references: [groupe_id])
+
+  @@id([utilisateur_id, groupe_id])
+}

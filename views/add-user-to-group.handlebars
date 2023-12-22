@@ -1,0 +1,22 @@
+<head>
+  <link rel="stylesheet" type="text/css" href="/create-and-add-user-group.css">
+</head>
+<body>
+    <form action="/add-user-to-group" method="POST">
+        <label for="groupId">Groupe:</label>
+        <select id="groupId" name="groupId" required>
+            {{#each groups}}
+                <option value="{{this.groupe_id}}">{{this.nom_groupe}}</option>
+            {{/each}}
+        </select>
+
+        <label for="userId">Users:</label>
+        <select id="userId" name="userId" required>
+            {{#each users}}
+                <option value="{{this.utilisateur_id}}">{{this.username}}</option>
+            {{/each}}
+        </select>
+
+        <button type="submit">Add User to Group</button>
+    </form>
+</body>
