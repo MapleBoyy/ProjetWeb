@@ -2,7 +2,7 @@
   <link rel="stylesheet" type="text/css" href="/dashboard.css">
 </head>
 
-
+<div class="affichage">
 <!-- Ajout de la section pour afficher les rappels -->
 {{#each rappels}}
   <table>
@@ -19,11 +19,12 @@
         <td>{{this.nom_rappel}}</td>
         <td>{{this.date_echeance}}</td>
         <td>{{this.heure_echeance}}</td>
-        <td>{{this.description}}</td>
+        <td>{{{this.description}}}</td>
       </tr>
     </tbody>
   </table>
 {{/each}}
+
 
 {{#each groups}}
   <table>
@@ -47,3 +48,4 @@
     </tbody>
   </table>
 {{/each}}
+</div>
